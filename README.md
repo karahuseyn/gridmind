@@ -1,146 +1,81 @@
-# 🎮 GridMind
+🎮 GridMind
 
-**ARC-Style Pattern Puzzle Game**
+ARC-style pattern puzzle game
 
-GridMind, ARC (Abstraction and Reasoning Corpus) tarzı bir bulmaca oyunudur. Blokları hareket ettirerek hedef deseni oluşturun!
+GridMind is a minimalist puzzle game inspired by the Abstraction and Reasoning Corpus (ARC).
+Your goal is to transform a grid of blocks into a target pattern using simple but non-trivial rules.
 
-![GridMind Screenshot](screenshot.png)
+🧩 Gameplay
 
-## 🎯 Oyun Hakkında
+A Target Pattern is shown at the top
 
-GridMind'da amacınız, farklı davranışlara sahip blokları hareket ettirerek ekranda gösterilen hedef deseni (pattern) oluşturmaktır. Her blok tipi farklı şekilde hareket eder veya renk değiştirir.
+Move blocks on the grid using directional controls
 
-## 🕹️ Nasıl Oynanır?
+Each block type behaves differently (movement and/or color change)
 
-1. Ekranın üstündeki **Target Pattern** hedef deseninizi gösterir
-2. Grid üzerindeki blokları **yön tuşları** veya **D-pad** ile hareket ettirin
-3. Blokları hedef alana getirip doğru renklerde hizalayın
-4. Süre bitmeden deseni tamamlayın!
+Complete the pattern before time runs out
 
-## 🧱 Blok Tipleri
+🧱 Block Types
+Type	Behavior
+Classic	Normal movement
+Reverse	Moves in the opposite direction
+Static	Does not move, only changes color
+Hybrid	Moves and changes color
+Reverse Hybrid	Reverse movement + color change
+🎲 Game Modes
 
-| Blok | Sembol | Davranış |
-|------|--------|----------|
-| **Classic** | → | Normal yönde hareket eder |
-| **Reverse** | ← | Ters yönde hareket eder |
-| **Static** | ◆ | Hareket etmez, sadece renk değiştirir |
-| **Hybrid** | ⟳ | Hareket eder + renk değiştirir |
-| **Rev.Hybrid** | ⟲ | Ters hareket + renk değiştirir |
+Random Mode
 
-## 🎲 Oyun Modları
+Procedurally generated puzzles
 
-### Random Mode
-- Prosedürel üretilen sonsuz seviyeler
-- Kademeli artan zorluk
-- Ne kadar ileri gidebilirsin?
+Increasing difficulty
 
-### Campaign Mode
-- Önceden tasarlanmış seviyeler
-- JSON formatında level pack yükleme
-- LocalStorage'a kaydedilir (bir kere yükle, hep oyna)
+Endless gameplay
 
-## 🎮 Kontroller
+Campaign Mode
 
-| Platform | Kontrol |
-|----------|---------|
-| **Klavye** | Arrow Keys veya WASD |
-| **Mobil** | Ekrandaki D-pad butonları |
-| **Pause** | ESC tuşu veya ⏸ butonu |
+Predefined levels
 
-## 📁 Dosyalar
+Load levels from JSON packs
 
-```
-GridMind/
-├── index.html          # Ana oyun dosyası
-├── gridmind_designer.html  # Level tasarlama aracı
-├── README.md           # Bu dosya
-└── levels/             # (Opsiyonel) Level pack dosyaları
-    └── campaign.json
-```
+Stored locally in the browser
 
-## 🛠️ Level Designer
+🛠️ Level Designer
 
-Kendi bölümlerinizi tasarlamak için `gridmind_designer.html` dosyasını kullanın:
+Use gridmind_designer.html to create custom levels:
 
-1. **Araç seçin**: Wall, Classic, Reverse, Static, Hybrid, Rev.Hybrid
-2. **Renk seçin**: 9 farklı renk
-3. **Grid'e tıklayın**: Blok ve duvarları yerleştirin
-4. **Target Area**: Boyut seçip grid üzerine yerleştirin
-5. **Pattern düzenleyin**: Preview'da hedef renkleri ayarlayın
-6. **Kaydet**: Level adı, süre ve zorluk girin
-7. **İndir**: Tüm levelleri JSON olarak indirin
+Place blocks and walls on a grid
 
-## 🚀 Kurulum
+Define target patterns
 
-### Yerel Çalıştırma
-Herhangi bir sunucuya ihtiyaç duymadan doğrudan tarayıcıda açabilirsiniz:
+Set time limits and difficulty
 
-```bash
-# Dosyayı tarayıcıda açın
-open index.html
-# veya
-start index.html  # Windows
-```
+Export levels as JSON
 
-### Web Sunucusu ile
-```bash
-# Python ile basit sunucu
-python -m http.server 8000
+🚀 Running the Game
 
-# Node.js ile
-npx serve
-```
+No setup required.
+Just open index.html in a modern browser.
 
-## 📱 Özellikler
+Optional local server:
 
-- ✅ Tamamen responsive tasarım
-- ✅ Mobil uyumlu (touch controls)
-- ✅ Offline çalışır (tek HTML dosyası)
-- ✅ Replay sistemi (oyunları kaydet ve izle)
-- ✅ LocalStorage ile level pack kaydetme
-- ✅ 25+ kademeli zorluk seviyesi
-- ✅ Pause/Resume desteği
-- ✅ Cyberpunk neon tema
+python -m http.server
 
-## 🔄 Replay Sistemi
+✨ Features
 
-- Oyunlarınız otomatik kaydedilir
-- Game Over ekranından **Watch Replay** ile izleyin
-- **Download Replay** ile JSON olarak indirin
-- Ana menüden **Load Replay File** ile tekrar izleyin
-- Hız kontrolü: 0.5x, 1x, 2x, 4x
+Responsive & mobile-friendly
 
-## 📊 Puanlama
+Offline playable
 
-```
-Puan = (Pattern Genişliği × Yüksekliği × 20) + (Kalan Süre × 2)
-```
+Replay system
 
-Daha büyük patternler ve hızlı çözümler = daha yüksek puan!
+Progressive difficulty
 
-## 🎨 Teknolojiler
+Pure Vanilla JavaScript
 
-- Vanilla JavaScript (framework yok)
-- CSS Grid & Flexbox
-- LocalStorage API
-- Tek HTML dosyası (~2000 satır)
+🧠 Scoring
+Score = (Pattern Width × Height × 20) + (Remaining Time × 2)
 
-## 📄 Lisans
+📄 License
 
-MIT License - Dilediğiniz gibi kullanabilirsiniz.
-
-## 🤝 Katkıda Bulunma
-
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Commit yapın (`git commit -m 'Add amazing feature'`)
-4. Push yapın (`git push origin feature/amazing-feature`)
-5. Pull Request açın
-
-## 📞 İletişim
-
-Sorularınız için issue açabilirsiniz.
-
----
-
-**Enjoy the game! 🎮**
+MIT License.

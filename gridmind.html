@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GridMind - ARC Pattern Puzzle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --panel: rgba(20, 20, 30, 0.95);
+            --grid-bg: #12121a;
+            --cell-empty: #1a1a25;
+            --neon-cyan: #00fff2;
+            --neon-magenta: #ff00ff;
+            --neon-yellow: #ffff00;
+            --neon-green: #00ff88;
+            --neon-orange: #ff8800;
+            --neon-red: #ff2266;
+            --neon-blue: #0088ff;
+            --neon-purple: #aa00ff;
+            --neon-pink: #ff66aa;
+            --success: #00ff9d;
+            --warning: #ffaa00;
+            --danger: #ff3366;
+            --text: #ffffff;
+            --text-dim: #888899;
+            --wall-color: #3a3a4a;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            padding: 5px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .pause-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--panel);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pause-btn.hidden {
+            display: none;
+        }
+
+        .stats {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 10px;
+            background: var(--panel);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            font-family: 'Courier New', monospace;
+        }
+
+        .stat-value.warning {
+            color: var(--warning);
+            animation: pulse 0.5s infinite;
+        }
+
+        .stat-value.danger {
+            color: var(--danger);
+            animation: pulse 0.3s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stat-label {
+            font-size: 8px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pattern-section {
+            width: 100%;
+            background: var(--panel);
+            border-radius: 10px;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .pattern-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .pattern-title {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pattern-info {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pattern-size, .pattern-difficulty {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .pattern-size {
+            color: var(--neon-magenta);
+            background: rgba(255, 0, 255, 0.1);
+        }
+
+        .pattern-difficulty {
+            color: var(--neon-cyan);
+            background: rgba(0, 255, 242, 0.1);
+        }
+
+        .pattern-grid {
+            display: flex;
+            justify-content: center;
+            padding: 6px;
+            background: var(--grid-bg);
+            border-radius: 6px;
+        }
+
+        .pattern-container {
+            display: grid;
+            gap: 2px;
+        }
+
+        .pattern-cell {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+        }
+
+        .grid-section {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+
+        .grid-wrapper {
+            padding: 4px;
+            background: linear-gradient(135deg, rgba(0, 255, 242, 0.3), rgba(255, 0, 255, 0.3));
+            border-radius: 12px;
+        }
+
+        .grid-wrapper.success {
+            background: linear-gradient(135deg, rgba(0, 255, 157, 0.5), rgba(0, 255, 136, 0.5));
+            animation: successGlow 0.5s ease;
+        }
+
+        @keyframes successGlow {
+            0% { box-shadow: 0 0 0 rgba(0, 255, 157, 0); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 157, 0.8); }
+            100% { box-shadow: 0 0 15px rgba(0, 255, 157, 0.4); }
+        }
+
+        .grid-container {
+            position: relative;
+            background: var(--grid-bg);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .grid-bg {
+            display: grid;
+            gap: 2px;
+        }
+
+        .grid-bg-cell {
+            background: var(--cell-empty);
+            border-radius: 3px;
+        }
+
+        .blocks-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .wall {
+            position: absolute;
+            border-radius: 4px;
+            background: var(--wall-color);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .wall::after {
+            content: '';
+            width: 40%;
+            height: 40%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .block {
+            position: absolute;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            transition: left 0.11s linear, top 0.11s linear, background-color 0.15s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .block.matched {
+            animation: matchPulse 0.5s ease forwards;
+            border-color: var(--success) !important;
+            box-shadow: 0 0 20px var(--success);
+        }
+
+        @keyframes matchPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .block-indicator {
+            position: absolute;
+            bottom: 1px;
+            right: 2px;
+            font-size: 10px;
+            opacity: 0.9;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+        }
+
+        .controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            padding-bottom: 5px;
+        }
+
+        .controls.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .dpad-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dpad-row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .dpad-row-middle {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin: -3px 0;
+        }
+
+        .ctrl-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #2a2a35, #1a1a22);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+        }
+
+        .ctrl-btn:active {
+            transform: scale(0.95);
+            background: linear-gradient(145deg, #1a1a22, #2a2a35);
+        }
+
+        .legend {
+            width: 100%;
+            background: var(--panel);
+            border-radius: 8px;
+            padding: 6px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .legend-title {
+            font-size: 9px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 9px;
+            color: var(--text-dim);
+        }
+
+        .legend-block {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(5, 5, 10, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .overlay.hidden { display: none; }
+
+        .overlay-title {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .overlay-subtitle {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-stat { text-align: center; }
+
+        .result-stat-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+        }
+
+        .result-stat-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 4px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 242, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--neon-orange), var(--neon-red));
+            color: #fff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+            color: #000;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #aa0033);
+            color: #fff;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .menu-divider {
+            width: 200px;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+        }
+
+        .menu-section-title {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .instructions {
+            text-align: center;
+            max-width: 380px;
+            margin-bottom: 15px;
+        }
+
+        .instructions p {
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            line-height: 1.4;
+            font-size: 13px;
+        }
+
+        .block-types-preview {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .block-type-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: var(--panel);
+            padding: 8px;
+            border-radius: 8px;
+            min-width: 65px;
+        }
+
+        .block-type-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .block-type-name {
+            font-size: 8px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--panel);
+            padding: 18px 30px;
+            border-radius: 12px;
+            border: 2px solid var(--neon-cyan);
+            font-weight: 700;
+            font-size: 16px;
+            z-index: 1001;
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .toast.show { transform: translate(-50%, -50%) scale(1); }
+        .toast.success { border-color: var(--success); color: var(--success); }
+        .toast.error { border-color: var(--danger); color: var(--danger); }
+
+        .toast-points {
+            font-size: 24px;
+            color: var(--neon-yellow);
+            margin-top: 5px;
+        }
+
+        /* Mode Selector */
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            padding: 12px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .mode-btn:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 255, 242, 0.1);
+        }
+
+        .mode-btn.active {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 255, 242, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+        }
+
+        /* Level Pack Info */
+        .level-pack-box {
+            background: rgba(0, 255, 242, 0.1);
+            border: 1px solid rgba(0, 255, 242, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+            min-width: 280px;
+        }
+
+        .level-pack-box.empty {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pack-name {
+            font-weight: bold;
+            color: var(--neon-cyan);
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .pack-details {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .pack-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        /* Replay controls */
+        .replay-overlay-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel);
+            padding: 15px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .replay-overlay-controls.hidden { display: none; }
+
+        .replay-progress {
+            width: 250px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .replay-progress-bar {
+            height: 100%;
+            background: var(--neon-cyan);
+            transition: width 0.1s linear;
+        }
+
+        .replay-info {
+            color: var(--text-dim);
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .replay-btns {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .replay-speed {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .replay-speed label {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .replay-speed select {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        @media (max-height: 650px) {
+            .pattern-cell { width: 20px; height: 20px; }
+            .ctrl-btn { width: 48px; height: 48px; font-size: 20px; }
+            .dpad-row-middle { gap: 50px; }
+        }
+
+        @media (min-width: 500px) {
+            .pattern-cell { width: 28px; height: 28px; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Start Screen -->
+    <div class="overlay" id="startScreen">
+        <div class="overlay-title">GridMind</div>
+        <div class="overlay-subtitle">ARC-Style Pattern Puzzle</div>
+        
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="random" onclick="selectMode('random')">🎲 Random</button>
+            <button class="mode-btn" data-mode="campaign" onclick="selectMode('campaign')">📚 Campaign</button>
+        </div>
+
+        <!-- Random Mode Info -->
+        <div id="randomModeInfo" class="instructions">
+            <p>Procedurally generated levels with increasing difficulty. How far can you go?</p>
+        </div>
+
+        <!-- Campaign Mode Info -->
+        <div id="campaignModeInfo" class="instructions" style="display: none;">
+            <div id="levelPackLoaded" class="level-pack-box" style="display: none;">
+                <div class="pack-name" id="packName">Level Pack</div>
+                <div class="pack-details" id="packDetails">0 levels loaded</div>
+                <div class="pack-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('levelPackInput').click()">📂 Change</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteLevelPack()">🗑️ Delete</button>
+                </div>
+            </div>
+            
+            <div id="noLevelPack" class="level-pack-box empty">
+                <p style="color: var(--text-dim); margin-bottom: 10px;">No level pack loaded</p>
+                <button class="btn btn-primary btn-sm" onclick="document.getElementById('levelPackInput').click()">📂 Load Level Pack</button>
+            </div>
+            
+            <input type="file" id="levelPackInput" accept=".json" style="display: none;" onchange="loadLevelPack(event)">
+        </div>
+
+        <div class="instructions">
+            <div class="block-types-preview">
+                <div class="block-type-item">
+                    <div class="block-type-icon" style="background: var(--neon-cyan);">→</div>
+                    <div class="block-type-name">Classic<br>Normal move</div>
+                </div>
+                <div class="block-type-item">
+                    <div class="block-type-icon" style="background: var(--neon-orange);">←</div>
+                    <div class="block-type-name">Reverse<br>Opposite dir</div>
+                </div>
+                <div class="block-type-item">
+                    <div class="block-type-icon" style="background: var(--neon-magenta);">◆</div>
+                    <div class="block-type-name">Static<br>Color change</div>
+                </div>
+                <div class="block-type-item">
+                    <div class="block-type-icon" style="background: var(--neon-green);">⟳</div>
+                    <div class="block-type-name">Hybrid<br>Move + Color</div>
+                </div>
+                <div class="block-type-item">
+                    <div class="block-type-icon" style="background: var(--neon-purple);">⟲</div>
+                    <div class="block-type-name">Rev.Hybrid<br>Rev + Color</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="menu-buttons">
+            <button class="btn btn-primary" onclick="startGame()">START GAME</button>
+            <div class="menu-divider"></div>
+            <div class="menu-section-title">Replay</div>
+            <button class="btn btn-secondary" onclick="showReplayLoader()">LOAD REPLAY FILE</button>
+        </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div class="overlay hidden" id="pauseScreen">
+        <div class="overlay-title">Paused</div>
+        <div class="result-stats">
+            <div class="result-stat">
+                <div class="result-stat-value" id="pauseScore">0</div>
+                <div class="result-stat-label">Score</div>
+            </div>
+            <div class="result-stat">
+                <div class="result-stat-value" id="pauseLevel">1</div>
+                <div class="result-stat-label">Level</div>
+            </div>
+            <div class="result-stat">
+                <div class="result-stat-value" id="pauseTime">60</div>
+                <div class="result-stat-label">Time Left</div>
+            </div>
+        </div>
+        <div class="menu-buttons">
+            <button class="btn btn-primary" onclick="resumeGame()">RESUME</button>
+            <button class="btn btn-warning" onclick="restartGame()">RESTART</button>
+            <button class="btn btn-secondary" onclick="goToMainMenu()">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="overlay hidden" id="gameOverScreen">
+        <div class="overlay-title" id="gameOverTitle">Time's Up!</div>
+        <div class="overlay-subtitle" id="gameOverSubtitle">Better luck next time!</div>
+        <div class="result-stats">
+            <div class="result-stat">
+                <div class="result-stat-value" id="finalScore">0</div>
+                <div class="result-stat-label">Score</div>
+            </div>
+            <div class="result-stat">
+                <div class="result-stat-value" id="finalLevel">1</div>
+                <div class="result-stat-label">Level</div>
+            </div>
+            <div class="result-stat">
+                <div class="result-stat-value" id="finalPatterns">0</div>
+                <div class="result-stat-label">Patterns</div>
+            </div>
+        </div>
+        <div class="menu-buttons">
+            <button class="btn btn-primary" onclick="startGame()">PLAY AGAIN</button>
+            <button class="btn btn-secondary" onclick="goToMainMenu()">MAIN MENU</button>
+            <div class="menu-divider"></div>
+            <div class="menu-section-title">Replay System</div>
+            <p style="font-size: 11px; color: var(--text-dim); max-width: 280px; text-align: center; margin-bottom: 8px;">
+                Your game has been recorded!
+            </p>
+            <button class="btn btn-success" onclick="watchLastReplay()">WATCH REPLAY</button>
+            <button class="btn btn-secondary" onclick="downloadReplay()">DOWNLOAD REPLAY</button>
+        </div>
+    </div>
+
+    <!-- Replay Loader Screen -->
+    <div class="overlay hidden" id="replayLoaderScreen">
+        <div class="overlay-title">Load Replay</div>
+        <div class="overlay-subtitle">Select a replay JSON file to watch your previous games</div>
+        <input type="file" id="replayFileInput" accept=".json" style="display: none;" onchange="loadReplayFile(event)">
+        <div class="menu-buttons">
+            <button class="btn btn-primary" onclick="document.getElementById('replayFileInput').click()">SELECT FILE</button>
+            <button class="btn btn-secondary" onclick="hideReplayLoader()">BACK</button>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div class="container" id="gameContainer" style="display: none;">
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">GridMind</div>
+                <button class="pause-btn" onclick="pauseGame()" id="pauseBtn">⏸</button>
+            </div>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="timer">60</div>
+                    <div class="stat-label">Time</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Score</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">Level</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pattern-section">
+            <div class="pattern-header">
+                <span class="pattern-title">Target Pattern</span>
+                <div class="pattern-info">
+                    <span class="pattern-size" id="patternSize">3×3</span>
+                    <span class="pattern-difficulty" id="patternDifficulty">Easy</span>
+                </div>
+            </div>
+            <div class="pattern-grid">
+                <div class="pattern-container" id="patternContainer"></div>
+            </div>
+        </div>
+
+        <div class="grid-section" id="gridSection">
+            <div class="grid-wrapper" id="gridWrapper">
+                <div class="grid-container" id="gridContainer">
+                    <div class="grid-bg" id="gridBg"></div>
+                    <div class="blocks-layer" id="blocksLayer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls" id="gameControls">
+            <div class="dpad-container">
+                <div class="dpad-row">
+                    <button class="ctrl-btn" id="btnUp">▲</button>
+                </div>
+                <div class="dpad-row-middle">
+                    <button class="ctrl-btn" id="btnLeft">◀</button>
+                    <button class="ctrl-btn" id="btnRight">▶</button>
+                </div>
+                <div class="dpad-row">
+                    <button class="ctrl-btn" id="btnDown">▼</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-title">Block Types</div>
+            <div class="legend-items" id="legendItems"></div>
+        </div>
+    </div>
+
+    <!-- Replay Controls -->
+    <div class="replay-overlay-controls hidden" id="replayControls">
+        <div class="replay-info" id="replayModeLabel">REPLAY MODE</div>
+        <div class="replay-progress">
+            <div class="replay-progress-bar" id="replayProgressBar"></div>
+        </div>
+        <div class="replay-info" id="replayStepInfo">Move 0 / 0</div>
+        <div class="replay-speed">
+            <label>Speed:</label>
+            <select id="replaySpeedSelect" onchange="updateReplaySpeed()">
+                <option value="500">0.5x</option>
+                <option value="300" selected>1x</option>
+                <option value="150">2x</option>
+                <option value="75">4x</option>
+            </select>
+        </div>
+        <div class="replay-btns">
+            <button class="btn btn-secondary btn-sm" onclick="replayPrevStep()">◀◀</button>
+            <button class="btn btn-primary btn-sm" id="replayPlayBtn" onclick="toggleReplayPlay()">▶ PLAY</button>
+            <button class="btn btn-secondary btn-sm" onclick="replayNextStep()">▶▶</button>
+            <button class="btn btn-warning btn-sm" onclick="exitReplay()">EXIT</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const GRID_SIZE = 10;
+        const GAP = 2;
+        const LEVEL_PACK_KEY = 'gridmind_level_pack';
+
+        const COLORS = {
+            0: '#1a1a25', 1: '#00fff2', 2: '#ff00ff', 3: '#ffff00', 4: '#00ff88',
+            5: '#ff8800', 6: '#ff2266', 7: '#0088ff', 8: '#aa00ff', 9: '#ff66aa'
+        };
+
+        const BLOCK_TYPE_INFO = {
+            classic: { symbol: '→', name: 'Classic' },
+            reverse: { symbol: '←', name: 'Reverse' },
+            static: { symbol: '◆', name: 'Static' },
+            hybrid: { symbol: '⟳', name: 'Hybrid' },
+            reverse_hybrid: { symbol: '⟲', name: 'Rev.Hybrid' }
+        };
+
+        // Random mode configs
+        const LEVEL_CONFIGS = [
+            { patternW: 2, patternH: 2, reverse: 0, static: 0, hybrid: 0, revHybrid: 0, baseTime: 40, name: 'Beginner' },
+            { patternW: 2, patternH: 2, reverse: 0, static: 0, hybrid: 0, revHybrid: 0, baseTime: 40, name: 'Beginner' },
+            { patternW: 3, patternH: 2, reverse: 0, static: 0, hybrid: 0, revHybrid: 0, baseTime: 50, name: 'Beginner' },
+            { patternW: 2, patternH: 3, reverse: 0, static: 0, hybrid: 0, revHybrid: 0, baseTime: 50, name: 'Beginner' },
+            { patternW: 2, patternH: 2, reverse: 1, static: 0, hybrid: 0, revHybrid: 0, baseTime: 55, name: 'Easy' },
+            { patternW: 3, patternH: 2, reverse: 1, static: 0, hybrid: 0, revHybrid: 0, baseTime: 65, name: 'Easy' },
+            { patternW: 2, patternH: 3, reverse: 1, static: 0, hybrid: 0, revHybrid: 0, baseTime: 65, name: 'Easy' },
+            { patternW: 3, patternH: 3, reverse: 1, static: 0, hybrid: 0, revHybrid: 0, baseTime: 75, name: 'Easy' },
+            { patternW: 2, patternH: 2, reverse: 0, static: 1, hybrid: 0, revHybrid: 0, baseTime: 55, name: 'Easy+' },
+            { patternW: 3, patternH: 2, reverse: 1, static: 1, hybrid: 0, revHybrid: 0, baseTime: 75, name: 'Easy+' },
+            { patternW: 3, patternH: 3, reverse: 1, static: 1, hybrid: 0, revHybrid: 0, baseTime: 85, name: 'Easy+' },
+            { patternW: 4, patternH: 3, reverse: 1, static: 1, hybrid: 0, revHybrid: 0, baseTime: 95, name: 'Medium' },
+            { patternW: 3, patternH: 3, reverse: 2, static: 1, hybrid: 0, revHybrid: 0, baseTime: 95, name: 'Medium' },
+            { patternW: 4, patternH: 3, reverse: 2, static: 1, hybrid: 0, revHybrid: 0, baseTime: 105, name: 'Medium' },
+            { patternW: 3, patternH: 4, reverse: 2, static: 1, hybrid: 0, revHybrid: 0, baseTime: 105, name: 'Medium' },
+            { patternW: 4, patternH: 4, reverse: 2, static: 2, hybrid: 0, revHybrid: 0, baseTime: 120, name: 'Medium+' },
+            { patternW: 2, patternH: 2, reverse: 0, static: 0, hybrid: 1, revHybrid: 0, baseTime: 60, name: 'Tricky' },
+            { patternW: 3, patternH: 3, reverse: 1, static: 1, hybrid: 1, revHybrid: 0, baseTime: 100, name: 'Tricky' },
+            { patternW: 4, patternH: 3, reverse: 2, static: 1, hybrid: 1, revHybrid: 0, baseTime: 120, name: 'Tricky' },
+            { patternW: 4, patternH: 4, reverse: 2, static: 2, hybrid: 1, revHybrid: 0, baseTime: 140, name: 'Hard' },
+            { patternW: 2, patternH: 2, reverse: 0, static: 0, hybrid: 0, revHybrid: 1, baseTime: 65, name: 'Hard' },
+            { patternW: 3, patternH: 3, reverse: 1, static: 1, hybrid: 1, revHybrid: 1, baseTime: 130, name: 'Hard' },
+            { patternW: 4, patternH: 4, reverse: 2, static: 2, hybrid: 1, revHybrid: 1, baseTime: 160, name: 'Hard+' },
+            { patternW: 5, patternH: 4, reverse: 2, static: 2, hybrid: 2, revHybrid: 1, baseTime: 180, name: 'Expert' },
+            { patternW: 5, patternH: 5, reverse: 3, static: 2, hybrid: 2, revHybrid: 2, baseTime: 210, name: 'Master' },
+        ];
+
+        const DIRECTIONS = {
+            UP: { dx: 0, dy: -1 },
+            DOWN: { dx: 0, dy: 1 },
+            LEFT: { dx: -1, dy: 0 },
+            RIGHT: { dx: 1, dy: 0 }
+        };
+
+        const COLOR_CYCLE = {
+            UP: [1, 4, 7],
+            DOWN: [2, 5, 8],
+            LEFT: [3, 6, 9],
+            RIGHT: [1, 2, 3]
+        };
+
+        // Game state
+        let gameState = {
+            level: 1, score: 0, patternsCompleted: 0, timeLeft: 60,
+            timer: null, gameOver: false, isPaused: false, isLevelComplete: false,
+            cellSize: 30, walls: [], blocks: [], targetPattern: null,
+            patternPosition: { x: 0, y: 0 },
+            activeDirection: null, moveInterval: null,
+            levelConfig: null, transitioning: false,
+            gameMode: 'random',
+            levelPack: null,
+            campaignIndex: 0
+        };
+
+        // Replay
+        let replayData = { metadata: {}, levels: [], moves: [] };
+        let replayState = {
+            isReplaying: false,
+            currentMoveIndex: -1,
+            currentLevelIndex: 0,
+            isPlaying: false,
+            playInterval: null,
+            speed: 300,
+            returnTo: 'start'
+        };
+
+        // ==================== LEVEL PACK (LocalStorage) ====================
+        function loadLevelPackFromStorage() {
+            try {
+                const saved = localStorage.getItem(LEVEL_PACK_KEY);
+                if (saved) {
+                    gameState.levelPack = JSON.parse(saved);
+                    updateLevelPackUI();
+                    return true;
+                }
+            } catch (e) {
+                console.error('Error loading level pack:', e);
+            }
+            return false;
+        }
+
+        function saveLevelPackToStorage(data) {
+            try {
+                localStorage.setItem(LEVEL_PACK_KEY, JSON.stringify(data));
+                gameState.levelPack = data;
+                updateLevelPackUI();
+                return true;
+            } catch (e) {
+                console.error('Error saving level pack:', e);
+                showToast('Error saving level pack!', 'error');
+                return false;
+            }
+        }
+
+        function deleteLevelPack() {
+            if (confirm('Delete the saved level pack?')) {
+                localStorage.removeItem(LEVEL_PACK_KEY);
+                gameState.levelPack = null;
+                updateLevelPackUI();
+                showToast('Level pack deleted');
+            }
+        }
+
+        function loadLevelPack(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.levels && Array.isArray(data.levels) && data.levels.length > 0) {
+                        if (saveLevelPackToStorage(data)) {
+                            showToast(`Loaded ${data.levels.length} levels!`);
+                        }
+                    } else {
+                        showToast('Invalid level pack!', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error reading file!', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function updateLevelPackUI() {
+            const hasLevelPack = gameState.levelPack && gameState.levelPack.levels && gameState.levelPack.levels.length > 0;
+            
+            document.getElementById('levelPackLoaded').style.display = hasLevelPack ? 'block' : 'none';
+            document.getElementById('noLevelPack').style.display = hasLevelPack ? 'none' : 'block';
+            
+            if (hasLevelPack) {
+                const pack = gameState.levelPack;
+                document.getElementById('packName').textContent = pack.name || 'Level Pack';
+                document.getElementById('packDetails').textContent = `${pack.levels.length} levels loaded`;
+            }
+        }
+
+        // ==================== MODE SELECTION ====================
+        function selectMode(mode) {
+            gameState.gameMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            document.getElementById('randomModeInfo').style.display = mode === 'random' ? 'block' : 'none';
+            document.getElementById('campaignModeInfo').style.display = mode === 'campaign' ? 'block' : 'none';
+        }
+
+        // ==================== UTILITY ====================
+        function shuffleArray(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function getLevelConfig(level) {
+            const idx = Math.min(level - 1, LEVEL_CONFIGS.length - 1);
+            return JSON.parse(JSON.stringify(LEVEL_CONFIGS[idx]));
+        }
+
+        function generateTargetPattern(w, h, level) {
+            const pattern = [];
+            const numColors = Math.min(2 + Math.floor(level / 5), 4);
+            const colors = shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]).slice(0, numColors);
+            const types = ['solid', 'checker', 'stripes_h', 'stripes_v', 'frame', 'cross', 'diagonal', 'dots'];
+            const type = types[Math.floor(Math.random() * Math.min(2 + Math.floor(level / 3), types.length))];
+
+            for (let y = 0; y < h; y++) {
+                pattern[y] = [];
+                for (let x = 0; x < w; x++) {
+                    pattern[y][x] = getPatternColor(x, y, w, h, type, colors);
+                }
+            }
+            return pattern;
+        }
+
+        function getPatternColor(x, y, w, h, type, colors) {
+            switch (type) {
+                case 'solid': return colors[0];
+                case 'checker': return colors[(x + y) % 2];
+                case 'stripes_h': return colors[y % colors.length];
+                case 'stripes_v': return colors[x % colors.length];
+                case 'frame': return (x === 0 || x === w - 1 || y === 0 || y === h - 1) ? colors[0] : (colors[1] || colors[0]);
+                case 'cross':
+                    const mx = Math.floor(w / 2), my = Math.floor(h / 2);
+                    return (x === mx || y === my) ? colors[0] : (colors[1] || colors[0]);
+                case 'diagonal': return colors[(x + y) % colors.length];
+                case 'dots': return (x % 2 === 1 && y % 2 === 1) ? colors[0] : (colors[1] || colors[0]);
+                default: return colors[Math.floor(Math.random() * colors.length)];
+            }
+        }
+
+        function generateBlockTypes(totalBlocks, config) {
+            const types = [];
+            const maxSpecial = totalBlocks - 1;
+            let specialCount = 0;
+
+            for (let i = 0; i < (config.reverse || 0) && specialCount < maxSpecial; i++) { types.push('reverse'); specialCount++; }
+            for (let i = 0; i < (config.static || 0) && specialCount < maxSpecial; i++) { types.push('static'); specialCount++; }
+            for (let i = 0; i < (config.hybrid || 0) && specialCount < maxSpecial; i++) { types.push('hybrid'); specialCount++; }
+            for (let i = 0; i < (config.revHybrid || 0) && specialCount < maxSpecial; i++) { types.push('reverse_hybrid'); specialCount++; }
+
+            while (types.length < totalBlocks) types.push('classic');
+            return shuffleArray(types).slice(0, totalBlocks);
+        }
+
+        function generateRandomGrid(pattern, config) {
+            const walls = [], blocks = [], occupied = new Set();
+            const w = config.patternW, h = config.patternH;
+            const px = Math.floor(Math.random() * (GRID_SIZE - w + 1));
+            const py = Math.floor(Math.random() * (GRID_SIZE - h + 1));
+            gameState.patternPosition = { x: px, y: py };
+
+            for (let i = 0; i < 5; i++) {
+                let attempts = 0;
+                while (attempts < 20) {
+                    const wx = Math.floor(Math.random() * (GRID_SIZE - 2)) + 1;
+                    const wy = Math.floor(Math.random() * (GRID_SIZE - 2)) + 1;
+                    const inPattern = wx >= px && wx < px + w && wy >= py && wy < py + h;
+                    if (!inPattern && !occupied.has(wx + ',' + wy)) {
+                        walls.push({ x: wx, y: wy });
+                        occupied.add(wx + ',' + wy);
+                        if (Math.random() > 0.5) {
+                            const dirs = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+                            const d = dirs[Math.floor(Math.random() * 4)];
+                            const nx = wx + d[0], ny = wy + d[1];
+                            const nInP = nx >= px && nx < px + w && ny >= py && ny < py + h;
+                            if (nx > 0 && nx < GRID_SIZE - 1 && ny > 0 && ny < GRID_SIZE - 1 && !occupied.has(nx + ',' + ny) && !nInP) {
+                                walls.push({ x: nx, y: ny });
+                                occupied.add(nx + ',' + ny);
+                            }
+                        }
+                        break;
+                    }
+                    attempts++;
+                }
+            }
+
+            const totalBlocks = w * h;
+            const blockTypes = generateBlockTypes(totalBlocks, config);
+
+            let blockId = 0;
+            for (let dy = 0; dy < h; dy++) {
+                for (let dx = 0; dx < w; dx++) {
+                    const targetColor = pattern[dy][dx];
+                    const blockType = blockTypes[blockId];
+                    let startX, startY;
+
+                    if (blockType === 'static') {
+                        startX = px + dx;
+                        startY = py + dy;
+                    } else {
+                        let placed = false;
+                        for (let att = 0; att < 100 && !placed; att++) {
+                            const rx = Math.floor(Math.random() * GRID_SIZE);
+                            const ry = Math.floor(Math.random() * GRID_SIZE);
+                            if (!occupied.has(rx + ',' + ry)) {
+                                startX = rx; startY = ry;
+                                occupied.add(rx + ',' + ry);
+                                placed = true;
+                            }
+                        }
+                        if (!placed) {
+                            for (let y = 0; y < GRID_SIZE && !placed; y++) {
+                                for (let x = 0; x < GRID_SIZE && !placed; x++) {
+                                    if (!occupied.has(x + ',' + y)) {
+                                        startX = x; startY = y;
+                                        occupied.add(x + ',' + y);
+                                        placed = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    let initColor = targetColor;
+                    if (blockType === 'static' || blockType === 'hybrid' || blockType === 'reverse_hybrid') {
+                        initColor = [1, 2, 3, 4, 5, 6, 7, 8, 9][Math.floor(Math.random() * 9)];
+                    }
+
+                    blocks.push({
+                        id: blockId++, x: startX, y: startY, color: initColor,
+                        targetColor: targetColor, targetX: px + dx, targetY: py + dy,
+                        type: blockType, colorIdx: 0
+                    });
+                }
+            }
+
+            return { walls, blocks };
+        }
+
+        function loadCampaignLevel(levelData) {
+            gameState.patternPosition = { x: levelData.targetX, y: levelData.targetY };
+            gameState.targetPattern = levelData.targetPattern;
+            gameState.walls = levelData.walls.map(w => ({ ...w }));
+
+            gameState.blocks = levelData.blocks.map((b, idx) => ({
+                id: idx,
+                x: b.x,
+                y: b.y,
+                color: b.color,
+                targetColor: b.targetColor,
+                targetX: b.targetX !== undefined ? b.targetX : levelData.targetX + (idx % levelData.targetWidth),
+                targetY: b.targetY !== undefined ? b.targetY : levelData.targetY + Math.floor(idx / levelData.targetWidth),
+                type: b.type,
+                colorIdx: 0
+            }));
+
+            gameState.levelConfig = {
+                patternW: levelData.targetWidth,
+                patternH: levelData.targetHeight,
+                name: levelData.difficulty || levelData.name || 'Custom',
+                baseTime: levelData.time
+            };
+            gameState.timeLeft = levelData.time;
+        }
+
+        // ==================== RENDERING ====================
+        function calculateCellSize() {
+            const section = document.getElementById('gridSection');
+            if (!section) return 30;
+            const rect = section.getBoundingClientRect();
+            const availableSize = Math.min(rect.width - 16, rect.height - 16);
+            gameState.cellSize = Math.max(28, Math.min(50, Math.floor((availableSize - GAP * 9) / GRID_SIZE)));
+            return gameState.cellSize;
+        }
+
+        function renderGrid() {
+            const cs = calculateCellSize();
+            const gridSize = cs * GRID_SIZE + GAP * 9;
+
+            const container = document.getElementById('gridContainer');
+            container.style.width = gridSize + 'px';
+            container.style.height = gridSize + 'px';
+
+            const gridBg = document.getElementById('gridBg');
+            gridBg.innerHTML = '';
+            gridBg.style.gridTemplateColumns = 'repeat(' + GRID_SIZE + ', ' + cs + 'px)';
+            gridBg.style.gridTemplateRows = 'repeat(' + GRID_SIZE + ', ' + cs + 'px)';
+
+            const { x: px, y: py } = gameState.patternPosition;
+            const pw = gameState.levelConfig.patternW;
+            const ph = gameState.levelConfig.patternH;
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-bg-cell';
+                    if (x >= px && x < px + pw && y >= py && y < py + ph) {
+                        cell.style.background = 'rgba(255,255,255,0.06)';
+                        cell.style.border = '1px dashed rgba(255,255,255,0.2)';
+                    }
+                    gridBg.appendChild(cell);
+                }
+            }
+
+            renderBlocksAndWalls();
+        }
+
+        function renderBlocksAndWalls() {
+            const cs = gameState.cellSize;
+            const layer = document.getElementById('blocksLayer');
+            layer.innerHTML = '';
+
+            for (const w of gameState.walls) {
+                const el = document.createElement('div');
+                el.className = 'wall';
+                el.style.width = cs + 'px';
+                el.style.height = cs + 'px';
+                el.style.left = (w.x * (cs + GAP)) + 'px';
+                el.style.top = (w.y * (cs + GAP)) + 'px';
+                layer.appendChild(el);
+            }
+
+            for (const b of gameState.blocks) {
+                const el = document.createElement('div');
+                el.className = 'block';
+                el.id = 'block-' + b.id;
+                el.style.width = cs + 'px';
+                el.style.height = cs + 'px';
+                el.style.left = (b.x * (cs + GAP)) + 'px';
+                el.style.top = (b.y * (cs + GAP)) + 'px';
+                el.style.backgroundColor = COLORS[b.color];
+
+                const ind = document.createElement('span');
+                ind.className = 'block-indicator';
+                ind.textContent = BLOCK_TYPE_INFO[b.type].symbol;
+                el.appendChild(ind);
+
+                layer.appendChild(el);
+            }
+        }
+
+        function updateBlockPositions() {
+            const cs = gameState.cellSize;
+            for (const b of gameState.blocks) {
+                const el = document.getElementById('block-' + b.id);
+                if (el) {
+                    el.style.left = (b.x * (cs + GAP)) + 'px';
+                    el.style.top = (b.y * (cs + GAP)) + 'px';
+                    el.style.backgroundColor = COLORS[b.color];
+                }
+            }
+        }
+
+        function renderPatternPreview() {
+            const c = document.getElementById('patternContainer');
+            c.innerHTML = '';
+            const w = gameState.levelConfig.patternW;
+            const h = gameState.levelConfig.patternH;
+            c.style.gridTemplateColumns = 'repeat(' + w + ', 1fr)';
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'pattern-cell';
+                    cell.style.backgroundColor = COLORS[gameState.targetPattern[y][x]];
+                    c.appendChild(cell);
+                }
+            }
+
+            document.getElementById('patternSize').textContent = w + '×' + h;
+            document.getElementById('patternDifficulty').textContent = gameState.levelConfig.name;
+        }
+
+        function renderLegend() {
+            const c = document.getElementById('legendItems');
+            c.innerHTML = '';
+            const types = new Set(gameState.blocks.map(b => b.type));
+
+            for (const t of types) {
+                const info = BLOCK_TYPE_INFO[t];
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+
+                const block = document.createElement('div');
+                block.className = 'legend-block';
+                block.style.background = 'var(--neon-cyan)';
+                block.textContent = info.symbol;
+
+                item.appendChild(block);
+                item.innerHTML += '<span>' + info.name + '</span>';
+                c.appendChild(item);
+            }
+        }
+
+        // ==================== REPLAY RECORDING ====================
+        function recordLevelStart() {
+            replayData.levels.push({
+                level: gameState.level,
+                timestamp: Date.now(),
+                pattern: JSON.parse(JSON.stringify(gameState.targetPattern)),
+                levelConfig: JSON.parse(JSON.stringify(gameState.levelConfig)),
+                patternPosition: { ...gameState.patternPosition },
+                walls: gameState.walls.map(w => ({ ...w })),
+                initialBlocks: gameState.blocks.map(b => ({ ...b })),
+                timeLeft: gameState.timeLeft
+            });
+        }
+
+        function recordMove(direction, blocksAfter) {
+            replayData.moves.push({
+                level: gameState.level,
+                direction: direction,
+                timestamp: Date.now(),
+                blocksAfter: blocksAfter.map(b => ({ ...b }))
+            });
+        }
+
+        // ==================== GAME LOGIC ====================
+        function performMove(direction, isReplay = false) {
+            if (gameState.isLevelComplete || gameState.gameOver || gameState.isPaused || gameState.transitioning) return;
+
+            const dir = DIRECTIONS[direction];
+            const wallSet = new Set(gameState.walls.map(w => w.x + ',' + w.y));
+            const blockPos = new Map();
+            gameState.blocks.forEach(b => blockPos.set(b.x + ',' + b.y, b));
+
+            const sorted = [...gameState.blocks].sort((a, b) => {
+                if (dir.dx > 0) return b.x - a.x;
+                if (dir.dx < 0) return a.x - b.x;
+                if (dir.dy > 0) return b.y - a.y;
+                if (dir.dy < 0) return a.y - b.y;
+                return 0;
+            });
+
+            for (const block of sorted) {
+                let dx = dir.dx, dy = dir.dy;
+
+                if (block.type === 'reverse' || block.type === 'reverse_hybrid') {
+                    dx = -dir.dx;
+                    dy = -dir.dy;
+                }
+
+                if (block.type === 'static') {
+                    dx = 0; dy = 0;
+                }
+
+                if (block.type === 'static' || block.type === 'hybrid' || block.type === 'reverse_hybrid') {
+                    const cycle = COLOR_CYCLE[direction];
+                    block.colorIdx = (block.colorIdx + 1) % cycle.length;
+                    block.color = cycle[block.colorIdx];
+                }
+
+                if (dx !== 0 || dy !== 0) {
+                    const nx = block.x + dx;
+                    const ny = block.y + dy;
+                    const key = nx + ',' + ny;
+
+                    if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE &&
+                        !wallSet.has(key) && !blockPos.has(key)) {
+                        blockPos.delete(block.x + ',' + block.y);
+                        block.x = nx;
+                        block.y = ny;
+                        blockPos.set(key, block);
+                    }
+                }
+            }
+
+            if (!isReplay && !replayState.isReplaying) {
+                recordMove(direction, gameState.blocks);
+            }
+
+            updateBlockPositions();
+
+            if (!replayState.isReplaying) {
+                checkPatternMatch();
+            }
+        }
+
+        function checkPatternMatch() {
+            if (gameState.isLevelComplete) return;
+
+            const { x: px, y: py } = gameState.patternPosition;
+            const w = gameState.levelConfig.patternW;
+            const h = gameState.levelConfig.patternH;
+            const blockMap = new Map();
+            gameState.blocks.forEach(b => blockMap.set(b.x + ',' + b.y, b));
+
+            let matched = true;
+            for (let dy = 0; dy < h && matched; dy++) {
+                for (let dx = 0; dx < w && matched; dx++) {
+                    const target = gameState.targetPattern[dy][dx];
+                    const block = blockMap.get((px + dx) + ',' + (py + dy));
+                    if (!block || block.color !== target) matched = false;
+                }
+            }
+
+            if (matched) handlePatternComplete();
+        }
+
+        function handlePatternComplete() {
+            gameState.isLevelComplete = true;
+            gameState.transitioning = true;
+            stopMovement();
+
+            document.getElementById('gameControls').classList.add('disabled');
+            document.getElementById('gridWrapper').classList.add('success');
+
+            gameState.blocks.forEach(b => {
+                const el = document.getElementById('block-' + b.id);
+                if (el) el.classList.add('matched');
+            });
+
+            const timeBonus = Math.floor(gameState.timeLeft * 2);
+            const sizeBonus = gameState.levelConfig.patternW * gameState.levelConfig.patternH * 20;
+            const points = sizeBonus + timeBonus;
+            gameState.score += points;
+            gameState.patternsCompleted++;
+
+            updateUI();
+            showToast('Pattern Complete!', 'success', points);
+
+            setTimeout(() => {
+                gameState.level++;
+                gameState.campaignIndex++;
+                gameState.isLevelComplete = false;
+                gameState.transitioning = false;
+                document.getElementById('gridWrapper').classList.remove('success');
+                document.getElementById('gameControls').classList.remove('disabled');
+                startLevel();
+            }, 1800);
+        }
+
+        function showToast(msg, type, points) {
+            const t = document.getElementById('toast');
+            t.innerHTML = msg + (points ? '<div class="toast-points">+' + points + '</div>' : '');
+            t.className = 'toast show ' + (type || '');
+            setTimeout(() => t.classList.remove('show'), 1500);
+        }
+
+        // ==================== GAME FLOW ====================
+        function startGame() {
+            // Check campaign requirements
+            if (gameState.gameMode === 'campaign') {
+                if (!gameState.levelPack || !gameState.levelPack.levels || gameState.levelPack.levels.length === 0) {
+                    showToast('Please load a level pack first!', 'error');
+                    return;
+                }
+            }
+
+            replayData = { metadata: { startTime: Date.now(), version: '1.4', mode: gameState.gameMode }, levels: [], moves: [] };
+
+            gameState = {
+                ...gameState,
+                level: 1, score: 0, patternsCompleted: 0, timeLeft: 60,
+                timer: null, gameOver: false, isPaused: false, isLevelComplete: false,
+                cellSize: 30, walls: [], blocks: [], targetPattern: null,
+                patternPosition: { x: 0, y: 0 },
+                activeDirection: null, moveInterval: null,
+                levelConfig: null, transitioning: false,
+                campaignIndex: 0
+            };
+
+            hideAllOverlays();
+            document.getElementById('gameContainer').style.display = 'flex';
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            document.getElementById('gameControls').style.display = 'flex';
+            document.getElementById('gameControls').classList.remove('disabled');
+            document.getElementById('replayControls').classList.add('hidden');
+
+            startLevel();
+        }
+
+        function startLevel() {
+            if (gameState.transitioning) return;
+
+            stopMovement();
+            gameState.isLevelComplete = false;
+
+            if (gameState.gameMode === 'campaign') {
+                // Campaign mode
+                if (gameState.campaignIndex >= gameState.levelPack.levels.length) {
+                    document.getElementById('gameOverTitle').textContent = '🎉 Campaign Complete!';
+                    document.getElementById('gameOverSubtitle').textContent = 'You finished all levels!';
+                    endGame();
+                    return;
+                }
+                const levelData = gameState.levelPack.levels[gameState.campaignIndex];
+                loadCampaignLevel(levelData);
+            } else {
+                // Random mode
+                gameState.levelConfig = getLevelConfig(gameState.level);
+                gameState.timeLeft = gameState.levelConfig.baseTime;
+
+                gameState.targetPattern = generateTargetPattern(
+                    gameState.levelConfig.patternW,
+                    gameState.levelConfig.patternH,
+                    gameState.level
+                );
+
+                const { walls, blocks } = generateRandomGrid(gameState.targetPattern, gameState.levelConfig);
+                gameState.walls = walls;
+                gameState.blocks = blocks;
+            }
+
+            if (!replayState.isReplaying) {
+                recordLevelStart();
+            }
+
+            updateUI();
+            renderPatternPreview();
+            renderGrid();
+            renderLegend();
+
+            if (gameState.timer) clearInterval(gameState.timer);
+            if (!replayState.isReplaying) {
+                gameState.timer = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function updateTimer() {
+            if (gameState.isPaused || gameState.isLevelComplete) return;
+            gameState.timeLeft--;
+            updateTimerDisplay();
+            if (gameState.timeLeft <= 0) endGame();
+        }
+
+        function updateTimerDisplay() {
+            const el = document.getElementById('timer');
+            el.textContent = gameState.timeLeft;
+            el.classList.remove('warning', 'danger');
+            if (gameState.timeLeft <= 10) el.classList.add('danger');
+            else if (gameState.timeLeft <= 20) el.classList.add('warning');
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('level').textContent = gameState.level;
+            updateTimerDisplay();
+        }
+
+        function pauseGame() {
+            if (gameState.gameOver || gameState.isLevelComplete || replayState.isReplaying) return;
+            gameState.isPaused = true;
+            stopMovement();
+
+            document.getElementById('pauseScore').textContent = gameState.score;
+            document.getElementById('pauseLevel').textContent = gameState.level;
+            document.getElementById('pauseTime').textContent = gameState.timeLeft;
+
+            document.getElementById('pauseScreen').classList.remove('hidden');
+        }
+
+        function resumeGame() {
+            gameState.isPaused = false;
+            document.getElementById('pauseScreen').classList.add('hidden');
+        }
+
+        function restartGame() {
+            hideAllOverlays();
+            startGame();
+        }
+
+        function goToMainMenu() {
+            if (gameState.timer) clearInterval(gameState.timer);
+            stopMovement();
+            exitReplay();
+
+            hideAllOverlays();
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('replayControls').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function hideAllOverlays() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('pauseScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('replayLoaderScreen').classList.add('hidden');
+        }
+
+        function endGame() {
+            gameState.gameOver = true;
+            if (gameState.timer) clearInterval(gameState.timer);
+            stopMovement();
+
+            replayData.metadata.endTime = Date.now();
+            replayData.metadata.finalScore = gameState.score;
+            replayData.metadata.finalLevel = gameState.level;
+            replayData.metadata.patternsCompleted = gameState.patternsCompleted;
+
+            setTimeout(() => {
+                document.getElementById('gameContainer').style.display = 'none';
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+                document.getElementById('finalScore').textContent = gameState.score;
+                document.getElementById('finalLevel').textContent = gameState.level;
+                document.getElementById('finalPatterns').textContent = gameState.patternsCompleted;
+
+                if (!document.getElementById('gameOverTitle').textContent.includes('Complete')) {
+                    document.getElementById('gameOverTitle').textContent = "Time's Up!";
+                    document.getElementById('gameOverSubtitle').textContent = 'Better luck next time!';
+                }
+            }, 500);
+        }
+
+        // ==================== MOVEMENT ====================
+        function startMovement(direction) {
+            if (gameState.gameOver || gameState.isPaused || gameState.isLevelComplete ||
+                gameState.transitioning || replayState.isReplaying) return;
+            if (gameState.activeDirection === direction) return;
+
+            gameState.activeDirection = direction;
+            performMove(direction);
+
+            if (gameState.moveInterval) clearInterval(gameState.moveInterval);
+
+            setTimeout(() => {
+                if (gameState.activeDirection === direction && !gameState.isLevelComplete) {
+                    gameState.moveInterval = setInterval(() => {
+                        if (gameState.activeDirection === direction && !gameState.isLevelComplete) {
+                            performMove(direction);
+                        }
+                    }, 110);
+                }
+            }, 150);
+        }
+
+        function stopMovement() {
+            gameState.activeDirection = null;
+            if (gameState.moveInterval) {
+                clearInterval(gameState.moveInterval);
+                gameState.moveInterval = null;
+            }
+        }
+
+        // ==================== REPLAY ====================
+        function downloadReplay() {
+            const dataStr = JSON.stringify(replayData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'gridmind_replay_' + Date.now() + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function showReplayLoader() {
+            replayState.returnTo = 'start';
+            hideAllOverlays();
+            document.getElementById('replayLoaderScreen').classList.remove('hidden');
+        }
+
+        function hideReplayLoader() {
+            document.getElementById('replayLoaderScreen').classList.add('hidden');
+            if (replayState.returnTo === 'gameover') {
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+            } else {
+                document.getElementById('startScreen').classList.remove('hidden');
+            }
+        }
+
+        function loadReplayFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.levels && data.moves !== undefined) {
+                        replayData = data;
+                        startReplayMode();
+                    } else {
+                        showToast('Invalid replay file!', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error loading file!', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function watchLastReplay() {
+            if (replayData.levels.length === 0) {
+                showToast('No replay data!', 'error');
+                return;
+            }
+            replayState.returnTo = 'gameover';
+            startReplayMode();
+        }
+
+        function startReplayMode() {
+            hideAllOverlays();
+
+            replayState = {
+                ...replayState,
+                isReplaying: true,
+                currentMoveIndex: -1,
+                currentLevelIndex: 0,
+                isPlaying: false,
+                playInterval: null,
+                speed: parseInt(document.getElementById('replaySpeedSelect')?.value || 300)
+            };
+
+            document.getElementById('gameContainer').style.display = 'flex';
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('gameControls').style.display = 'none';
+            document.getElementById('replayControls').classList.remove('hidden');
+
+            if (replayData.levels.length > 0) {
+                loadReplayLevel(0);
+            }
+
+            updateReplayUI();
+        }
+
+        function loadReplayLevel(levelIndex) {
+            if (levelIndex >= replayData.levels.length) return;
+
+            const levelData = replayData.levels[levelIndex];
+            replayState.currentLevelIndex = levelIndex;
+            replayState.currentMoveIndex = -1;
+
+            gameState.level = levelData.level;
+            gameState.targetPattern = levelData.pattern;
+            gameState.levelConfig = levelData.levelConfig;
+            gameState.patternPosition = levelData.patternPosition;
+            gameState.walls = levelData.walls.map(w => ({ ...w }));
+            gameState.blocks = levelData.initialBlocks.map(b => ({ ...b }));
+            gameState.timeLeft = levelData.timeLeft;
+            gameState.isLevelComplete = false;
+
+            gameState.score = 0;
+            for (let i = 0; i < levelIndex; i++) {
+                const lv = replayData.levels[i];
+                gameState.score += lv.levelConfig.patternW * lv.levelConfig.patternH * 20 + 50;
+            }
+
+            renderPatternPreview();
+            renderGrid();
+            renderLegend();
+            updateUI();
+        }
+
+        function getMovesForLevel(levelNum) {
+            return replayData.moves.filter(m => m.level === levelNum);
+        }
+
+        function getTotalMoveCount() {
+            return replayData.moves.length;
+        }
+
+        function getCurrentGlobalMoveIndex() {
+            let count = 0;
+            for (let i = 0; i < replayState.currentLevelIndex; i++) {
+                const lvl = replayData.levels[i];
+                count += getMovesForLevel(lvl.level).length;
+            }
+            count += replayState.currentMoveIndex + 1;
+            return Math.max(0, count);
+        }
+
+        function updateReplayUI() {
+            const total = getTotalMoveCount();
+            const current = getCurrentGlobalMoveIndex();
+
+            document.getElementById('replayStepInfo').textContent = 'Move ' + current + ' / ' + total;
+            document.getElementById('replayProgressBar').style.width = (total > 0 ? (current / total) * 100 : 0) + '%';
+            document.getElementById('replayPlayBtn').textContent = replayState.isPlaying ? '⏸' : '▶';
+        }
+
+        function replayNextStep() {
+            const currentLevel = replayData.levels[replayState.currentLevelIndex];
+            const levelMoves = getMovesForLevel(currentLevel.level);
+
+            if (replayState.currentMoveIndex < levelMoves.length - 1) {
+                replayState.currentMoveIndex++;
+                const move = levelMoves[replayState.currentMoveIndex];
+                gameState.blocks = move.blocksAfter.map(b => ({ ...b }));
+                renderBlocksAndWalls();
+                checkReplayPatternMatch();
+            } else if (replayState.currentLevelIndex < replayData.levels.length - 1) {
+                loadReplayLevel(replayState.currentLevelIndex + 1);
+            } else {
+                replayState.isPlaying = false;
+                if (replayState.playInterval) clearInterval(replayState.playInterval);
+            }
+
+            updateReplayUI();
+        }
+
+        function checkReplayPatternMatch() {
+            const { x: px, y: py } = gameState.patternPosition;
+            const w = gameState.levelConfig.patternW;
+            const h = gameState.levelConfig.patternH;
+            const blockMap = new Map();
+            gameState.blocks.forEach(b => blockMap.set(b.x + ',' + b.y, b));
+
+            let matched = true;
+            for (let dy = 0; dy < h && matched; dy++) {
+                for (let dx = 0; dx < w && matched; dx++) {
+                    const target = gameState.targetPattern[dy][dx];
+                    const block = blockMap.get((px + dx) + ',' + (py + dy));
+                    if (!block || block.color !== target) matched = false;
+                }
+            }
+
+            if (matched) {
+                document.getElementById('gridWrapper').classList.add('success');
+                gameState.blocks.forEach(b => {
+                    const el = document.getElementById('block-' + b.id);
+                    if (el) el.classList.add('matched');
+                });
+            } else {
+                document.getElementById('gridWrapper').classList.remove('success');
+            }
+        }
+
+        function replayPrevStep() {
+            if (replayState.currentMoveIndex >= 0) {
+                replayState.currentMoveIndex--;
+
+                if (replayState.currentMoveIndex < 0) {
+                    const currentLevel = replayData.levels[replayState.currentLevelIndex];
+                    gameState.blocks = currentLevel.initialBlocks.map(b => ({ ...b }));
+                } else {
+                    const currentLevel = replayData.levels[replayState.currentLevelIndex];
+                    const levelMoves = getMovesForLevel(currentLevel.level);
+                    const move = levelMoves[replayState.currentMoveIndex];
+                    gameState.blocks = move.blocksAfter.map(b => ({ ...b }));
+                }
+                renderBlocksAndWalls();
+                document.getElementById('gridWrapper').classList.remove('success');
+            } else if (replayState.currentLevelIndex > 0) {
+                loadReplayLevel(replayState.currentLevelIndex - 1);
+                const prevLevel = replayData.levels[replayState.currentLevelIndex];
+                const prevMoves = getMovesForLevel(prevLevel.level);
+                if (prevMoves.length > 0) {
+                    replayState.currentMoveIndex = prevMoves.length - 1;
+                    gameState.blocks = prevMoves[replayState.currentMoveIndex].blocksAfter.map(b => ({ ...b }));
+                    renderBlocksAndWalls();
+                    checkReplayPatternMatch();
+                }
+            }
+
+            updateReplayUI();
+        }
+
+        function toggleReplayPlay() {
+            replayState.isPlaying = !replayState.isPlaying;
+
+            if (replayState.isPlaying) {
+                replayState.playInterval = setInterval(() => {
+                    replayNextStep();
+                    if (!replayState.isPlaying) {
+                        clearInterval(replayState.playInterval);
+                    }
+                }, replayState.speed);
+            } else {
+                if (replayState.playInterval) clearInterval(replayState.playInterval);
+            }
+
+            updateReplayUI();
+        }
+
+        function updateReplaySpeed() {
+            replayState.speed = parseInt(document.getElementById('replaySpeedSelect').value);
+            if (replayState.isPlaying) {
+                clearInterval(replayState.playInterval);
+                replayState.playInterval = setInterval(() => {
+                    replayNextStep();
+                }, replayState.speed);
+            }
+        }
+
+        function exitReplay() {
+            replayState.isReplaying = false;
+            replayState.isPlaying = false;
+            if (replayState.playInterval) clearInterval(replayState.playInterval);
+
+            document.getElementById('replayControls').classList.add('hidden');
+            document.getElementById('gridWrapper').classList.remove('success');
+            document.getElementById('gameContainer').style.display = 'none';
+
+            if (replayState.returnTo === 'gameover') {
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+            } else {
+                document.getElementById('startScreen').classList.remove('hidden');
+            }
+        }
+
+        // ==================== CONTROLS ====================
+        function setupControls() {
+            const btns = { btnUp: 'UP', btnDown: 'DOWN', btnLeft: 'LEFT', btnRight: 'RIGHT' };
+
+            for (const [id, dir] of Object.entries(btns)) {
+                const btn = document.getElementById(id);
+                btn.addEventListener('mousedown', e => { e.preventDefault(); startMovement(dir); });
+                btn.addEventListener('touchstart', e => { e.preventDefault(); startMovement(dir); }, { passive: false });
+            }
+
+            document.addEventListener('mouseup', stopMovement);
+            document.addEventListener('touchend', stopMovement);
+            document.addEventListener('touchcancel', stopMovement);
+
+            document.addEventListener('keydown', e => {
+                if (replayState.isReplaying) return;
+                if (gameState.gameOver || gameState.isPaused || gameState.isLevelComplete) return;
+                const map = {
+                    ArrowUp: 'UP', ArrowDown: 'DOWN', ArrowLeft: 'LEFT', ArrowRight: 'RIGHT',
+                    w: 'UP', W: 'UP', s: 'DOWN', S: 'DOWN', a: 'LEFT', A: 'LEFT', d: 'RIGHT', D: 'RIGHT'
+                };
+                if (map[e.key]) { e.preventDefault(); startMovement(map[e.key]); }
+                if (e.key === 'Escape') pauseGame();
+            });
+
+            document.addEventListener('keyup', stopMovement);
+        }
+
+        window.addEventListener('resize', () => {
+            if (gameState.walls && gameState.walls.length > 0) renderGrid();
+        });
+
+        // ==================== INIT ====================
+        function init() {
+            loadLevelPackFromStorage();
+            setupControls();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
